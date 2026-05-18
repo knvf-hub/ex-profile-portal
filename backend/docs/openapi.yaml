@@ -149,6 +149,34 @@ paths:
                 required: [user]
         "401":
           $ref: "#/components/responses/Error"
+  /api/auth/password:
+    patch:
+      tags: [Auth]
+      summary: Change current user's password
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: password changed
+                required: [message]
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
   /api/profile:
     get:
       tags: [Profile]
@@ -337,6 +365,18 @@ components:
           format: password
           example: secret123
       required: [email, password]
+    ChangePasswordRequest:
+      type: object
+      properties:
+        current_password:
+          type: string
+          format: password
+          example: old-secret123
+        new_password:
+          type: string
+          format: password
+          example: new-secret123
+      required: [current_password, new_password]
     UpdateContactRequest:
       type: object
       properties:

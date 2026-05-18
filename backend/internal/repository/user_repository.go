@@ -43,3 +43,10 @@ func (r *UserRepository) FindByID(id uint) (*model.User, error) {
 	}
 	return &user, nil
 }
+
+func (r *UserRepository) UpdatePasswordHash(userID uint, passwordHash string) error {
+	return r.db.Model(&model.User{}).
+		Where("id = ?", userID).
+		Update("password_hash", passwordHash).
+		Error
+}

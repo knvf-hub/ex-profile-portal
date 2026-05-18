@@ -87,6 +87,7 @@ func main() {
 	auth.Post("/login", authHandler.Login)
 	auth.Post("/logout", authHandler.Logout)
 	auth.Get("/me", authMiddleware, authHandler.Me)
+	auth.Patch("/password", authMiddleware, authHandler.ChangePassword)
 
 	profile := api.Group("/profile", authMiddleware)
 	profile.Get("", profileHandler.GetProfile)

@@ -45,6 +45,11 @@ type LoginInput struct {
 	Password string `json:"password"`
 }
 
+type ChangePasswordInput struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}
+
 type AuthResult struct {
 	User      *model.User `json:"user"`
 	Token     string      `json:"-"`
@@ -120,6 +125,34 @@ func (s *AuthService) Login(input LoginInput) (*AuthResult, error) {
 	}
 
 	return s.createSession(user)
+}
+
+func (s *AuthService) ChangePassword(userID uint, input ChangePasswordInput) error {
+	if strings.TrimSpace(input.CurrentPassword) == "" || strings.TrimSpace(input.NewPassword) == "" {
+		return errors.New("current_password and new_password are required")
+	}
+	if len(input.NewPassword) < 8 {
+		return errors.New("new_password must be at least 8 characters")
+	}
+
+	user, err := s.users.FindByID(userID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return errors.New("user not found")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.CurrentPassword)); err != nil {
+		return errors.New("current password is incorrect")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	return s.users.UpdatePasswordHash(userID, string(hash))
 }
 
 func (s *AuthService) Logout(token string) error {

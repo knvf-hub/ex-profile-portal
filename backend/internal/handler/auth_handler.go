@@ -68,6 +68,24 @@ func (h *AuthHandler) Me(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"user": user})
 }
 
+func (h *AuthHandler) ChangePassword(c *fiber.Ctx) error {
+	user, ok := middleware.CurrentUser(c)
+	if !ok {
+		return fiber.NewError(fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	var input service.ChangePasswordInput
+	if err := c.BodyParser(&input); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid json body")
+	}
+
+	if err := h.auth.ChangePassword(user.ID, input); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(fiber.Map{"message": "password changed"})
+}
+
 func setSessionCookie(c *fiber.Ctx, token string, expiresAt time.Time) {
 	c.Cookie(&fiber.Cookie{
 		Name:     "session_token",
