@@ -1,0 +1,490 @@
+openapi: 3.0.3
+info:
+  title: Employee Profile Portal API
+  version: 1.0.0
+  description: Backend API for register/login with session cookies and employee profile management.
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Health
+  - name: Config
+  - name: Auth
+  - name: Profile
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        "200":
+          description: Server is running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /api/config/skills:
+    get:
+      tags: [Config]
+      summary: Get skill catalog
+      responses:
+        "200":
+          description: Skill catalog
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skills:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Skill"
+                required: [skills]
+    post:
+      tags: [Config]
+      summary: Add a skill to the catalog
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSkillRequest"
+      responses:
+        "201":
+          description: Created skill
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skill:
+                    $ref: "#/components/schemas/Skill"
+                required: [skill]
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register user and create profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Registered and logged in
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: HttpOnly session cookie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in and returned a session token
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: HttpOnly session cookie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          $ref: "#/components/responses/Error"
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout current session
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required: [message]
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current logged-in user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                required: [user]
+        "401":
+          $ref: "#/components/responses/Error"
+  /api/profile:
+    get:
+      tags: [Profile]
+      summary: Get current user's profile
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: "#/components/schemas/Profile"
+                required: [profile]
+        "401":
+          $ref: "#/components/responses/Error"
+  /api/profile/contact:
+    patch:
+      tags: [Profile]
+      summary: Update current user's contact info
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContactRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: "#/components/schemas/Profile"
+                required: [profile]
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+  /api/profile/skills:
+    patch:
+      tags: [Profile]
+      summary: Replace current user's skills
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSkillsRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: "#/components/schemas/Profile"
+                required: [profile]
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+  /api/profile/photo:
+    patch:
+      tags: [Profile]
+      summary: Upload current user's profile photo
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+              required: [photo]
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: "#/components/schemas/Profile"
+                required: [profile]
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+  /api/profile/history:
+    get:
+      tags: [Profile]
+      summary: Get current user's profile change history
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Change history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChangeHistory"
+                required: [history]
+        "401":
+          $ref: "#/components/responses/Error"
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_token
+  responses:
+    Error:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+      required: [status]
+    RegisterRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          example: Pheerawat
+        last_name:
+          type: string
+          example: Frank
+        email:
+          type: string
+          format: email
+          example: frank@example.com
+        password:
+          type: string
+          format: password
+          example: secret123
+        phone:
+          type: string
+          example: "0812345678"
+        address:
+          type: string
+          example: Bangkok
+        skills:
+          type: array
+          items:
+            type: string
+          example: [Go, React]
+      required: [first_name, last_name, email, password, phone, address, skills]
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: frank@example.com
+        password:
+          type: string
+          format: password
+          example: secret123
+      required: [email, password]
+    UpdateContactRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          example: "0899999999"
+        email:
+          type: string
+          format: email
+          example: contact@example.com
+        address:
+          type: string
+          example: Pathumwan
+      required: [phone, email, address]
+    UpdateSkillsRequest:
+      type: object
+      properties:
+        skills:
+          type: array
+          items:
+            type: string
+          example: [Go, CI/CD, Dotnet]
+      required: [skills]
+    CreateSkillRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Kubernetes
+      required: [name]
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        expires_at:
+          type: string
+          format: date-time
+      required: [user, expires_at]
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: 9e7659c8-965c-48ef-a5c9-fc7e90ce5c65
+        expires_at:
+          type: string
+          format: date-time
+      required: [token, expires_at]
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: frank@example.com
+        profile:
+          $ref: "#/components/schemas/Profile"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, email, profile, created_at, updated_at]
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        first_name:
+          type: string
+          example: Pheerawat
+        last_name:
+          type: string
+          example: Frank
+        phone:
+          type: string
+          example: "0812345678"
+        email:
+          type: string
+          example: frank@example.com
+        address:
+          type: string
+          example: Bangkok
+        image_url:
+          type: string
+          example: /uploads/profile.png
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Skill"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, user_id, first_name, last_name, phone, email, address, skills, created_at, updated_at]
+    Skill:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Go
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, created_at, updated_at]
+    ChangeHistory:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        profile_id:
+          type: integer
+          example: 1
+        field:
+          type: string
+          example: phone
+        old_value:
+          type: string
+          example: "0812345678"
+        new_value:
+          type: string
+          example: "0899999999"
+        created_at:
+          type: string
+          format: date-time
+      required: [id, profile_id, field, old_value, new_value, created_at]
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: unauthorized
+      required: [error]
